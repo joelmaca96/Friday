@@ -3,6 +3,7 @@ import constants as cs
 
 global Friday
 
+DEVELOPMENT = True
 
 def inicializar():
     global Friday
@@ -21,32 +22,53 @@ def Preprocesado(input):
     return output
 
 def Say(speech):
-    Friday.say(speech) 
-    Friday.runAndWait() 
-    Friday.stop()
+    if DEVELOPMENT:
+        print(speech)
+    else:
+        Friday.say(speech) 
+        Friday.runAndWait() 
+        Friday.stop()
 
 def Ajustes(input):
-    for item in cs.VOL_UP:
+    if ' al ' not in input:
+        cambio = 0
+        for item in cs.VOL_UP:
             if item in input:
-                if 'al' not in input:
-                    volumen = Friday.getProperty('volume')
-                    if volumen < 1:
-                        print('Subiendo el volumen de '+str(volumen) + ' ' + str(volumen + 0.1))
-                        Friday.setProperty('volume', volumen + 0.1)
-                        Friday.runAndWait() 
-                        Friday.stop()
-                return
+                cambio = 0.1
 
-    for item in cs.VOL_DOWN:
-        if item in input:
-            if 'al' not in input:
-                volumen = Friday.getProperty('volume')
-                if volumen > 0.2:
-                    print('bajando el volumen de '+str(volumen) + ' ' + str(volumen - 0.1))
-                    Friday.setProperty('volume', volumen - 0.1)
-                    Friday.runAndWait() 
-                    Friday.stop()
+        for item in cs.VOL_DOWN:
+            if item in input:
+                cambio = -0.1
+
+        volumen = Friday.getProperty('volume') + cambio
+
+        if volumen == 0 or volumen > 1:
             return
+
+        if DEVELOPMENT:
+            print('Cambiando el volumen de '+str(volumen) + ' ' + str(volumen - cambio))
+        else:
+            Friday.setProperty('volume', volumen)
+            Friday.runAndWait()
+            Friday.stop()
+
+    else:
+        startindex = input.rfind(' al ') +4
+        endindex = str(input).find(' ', startindex)
+        if endindex == -1:
+            endindex = len(input)
+
+        substring = input[startindex:endindex]
+        volumen = float(int(substring) / 10)
+
+        if DEVELOPMENT:
+            print('Cambiando el volumen a '+ str(volumen))
+        else:
+            Friday.setProperty('volume', volumen)
+            Friday.runAndWait()
+            Friday.stop()
+        
+    return   
 
 inicializar()
 

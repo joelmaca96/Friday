@@ -1,15 +1,18 @@
 import pyttsx3
 import constants as cs
-
+from temporizador import temporizador as temp
 global Friday
-
+global tempo
 DEVELOPMENT = True
 
 def inicializar():
-    global Friday
+    global Friday, tempo
     Friday = pyttsx3.init()
 
     Friday.setProperty('rate', 130)
+
+    #arrancar el modulo de temporizacion
+    tempo = temp()
 
 def Preprocesado(input):
     #Eliminar tildes
@@ -85,6 +88,11 @@ while not exit:
         #Comprobar si me piden subir o bajar el volumen
         if 'volumen' in my_text:
            Ajustes(my_text)
+
+        #comprobar si hay alguna orden de temporizacion
+        for Temporizacion in cs.TEMPORIZADOR:
+            if Temporizacion in my_text:
+                tempo.procesa(my_text)
             
         #Comprobar si nos están saludando
         for Saludo in cs.SALUDOS:

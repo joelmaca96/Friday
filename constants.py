@@ -2,6 +2,10 @@
 #Constantes para Friday
 NAME = 'friday'
 TEMPORIZADOR = ['temporizador', 'cuenta', 'cronometra', 'alarma', 'avisame']
+HORA = ['hora']
+FECHA = ['fecha', 'dia']
+
+TEMP_CONSTANTS = [TEMPORIZADOR, HORA, FECHA]
 VOL_UP = ['sube', 'subir', 'eleva', 'aumenta']
 VOL_DOWN = ['baja', 'bajar', 'disminuye', 'reduce']
 SALUDOS = ['hola', 'buenos dias', 'buenas tardes', 'kaixo', 'egun on', 'buenas noches', 'ole']

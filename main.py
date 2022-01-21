@@ -1,12 +1,23 @@
 import pyttsx3
 import constants as cs
+import threading
+import time
 from temporizador import temporizador as temp
+
 global Friday
 global tempo
+global exit
+global text_input
+global new_text
 DEVELOPMENT = True
 
 def inicializar():
     global Friday, tempo
+    global exit, text_input
+    
+    text_input = None
+    exit = False
+
     Friday = pyttsx3.init()
 
     Friday.setProperty('rate', 130)
@@ -14,13 +25,13 @@ def inicializar():
     #arrancar el modulo de temporizacion
     tempo = temp()
 
-def Preprocesado(input):
+def Preprocesado(text_input):
     #Eliminar tildes
     for a, b in cs.tildes:
-        input = input.replace(a, b).replace(a.upper(), b.upper())
+        text_input = text_input.replace(a, b).replace(a.upper(), b.upper())
 
     #Eliminar mayusculas
-    output =  input.lower()
+    output =  text_input.lower()
 
     return output
 
@@ -32,15 +43,15 @@ def Say(speech):
         Friday.runAndWait() 
         Friday.stop()
 
-def Ajustes(input):
-    if ' al ' not in input:
+def Ajustes(text_input):
+    if ' al ' not in text_input:
         cambio = 0
         for item in cs.VOL_UP:
-            if item in input:
+            if item in text_input:
                 cambio = 0.1
 
         for item in cs.VOL_DOWN:
-            if item in input:
+            if item in text_input:
                 cambio = -0.1
 
         volumen = Friday.getProperty('volume') + cambio
@@ -56,12 +67,12 @@ def Ajustes(input):
             Friday.stop()
 
     else:
-        startindex = input.rfind(' al ') +4
-        endindex = str(input).find(' ', startindex)
+        startindex = text_input.rfind(' al ') +4
+        endindex = str(text_input).find(' ', startindex)
         if endindex == -1:
-            endindex = len(input)
+            endindex = len(text_input)
 
-        substring = input[startindex:endindex]
+        substring = text_input[startindex:endindex]
         volumen = float(int(substring) / 10)
 
         if DEVELOPMENT:
@@ -73,35 +84,76 @@ def Ajustes(input):
         
     return   
 
-inicializar()
-
-exit = False
-while not exit:
-    my_text = input("Enter the text: ")
-    my_text = Preprocesado(my_text)
-
-    if cs.NAME in my_text:
-        #Comprobar si es una orden especial
-        if 'apagate' in my_text:
-            exit = True
+def get_data(args):
+    global exit, text_input, new_text
+    while not exit:
+        if not new_text:
+            text_input = input("Enter the text: ")
+            text_input = Preprocesado(text_input)
+            new_text = True
         
-        #Comprobar si me piden subir o bajar el volumen
-        if 'volumen' in my_text:
-           Ajustes(my_text)
+        else:
+            time.sleep(0.1)
+    return
 
-        #comprobar si hay alguna orden de temporizacion
-        for Temporizacion in cs.TEMPORIZADOR:
-            if Temporizacion in my_text:
-                tempo.procesa(my_text)
-            
-        #Comprobar si nos están saludando
-        for Saludo in cs.SALUDOS:
-            if Saludo in my_text:
-                Say("Buenos días!")
-                break
+def rutina_principal(args):
+    in_conversation = False
+    global exit, text_input, new_text
 
-        #Comprobar si se están despidiendo
-        for Despedida in cs.DESPEDIDAS:
-            if Despedida in my_text:
-                Say("Agur.")
-                break
+    while not exit:
+        if new_text:
+            if not in_conversation and text_input != None :
+                if cs.NAME in text_input:
+                    #Inicio conversacion.
+                    in_conversation = True
+
+            if in_conversation:
+                #Comprobar si es una orden especial
+                if 'apagate' in text_input:
+                    exit = True
+                
+                #Comprobar si me piden subir o bajar el volumen
+                if 'volumen' in text_input:
+                    Ajustes(text_input)
+
+                #comprobar si hay alguna orden de temporizacion
+                for Temporizacion in cs.TEMP_CONSTANTS:
+                    found = False
+                    for item in Temporizacion:
+                        if item in text_input:
+                            Say(tempo.procesa(item))
+                            found = True
+                            break
+                    if found:
+                        break
+                    
+                #Comprobar si nos están saludando
+                for Saludo in cs.SALUDOS:
+                    if Saludo in text_input:
+                        Say("Buenos días!")
+                        break
+
+                #Comprobar si se están despidiendo
+                for Despedida in cs.DESPEDIDAS:
+                    if Despedida in text_input:
+                        Say("Agur.")
+                        in_conversation = False
+                    break
+        
+        else:
+            time.sleep(0.1)
+    return
+
+if __name__ == "__main__":
+    
+    inicializar()
+
+    #Arrancar las tareas
+    MainTask    = threading.Thread(target=rutina_principal, args=(1,))
+    GetDataTask = threading.Thread(target=get_data, args=(1,))
+
+    MainTask.start()
+    GetDataTask.start()
+
+
+

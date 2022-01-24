@@ -4,6 +4,7 @@ import constants as cs
 import threading
 import time
 import ajustes
+from Text_Analisis import FirstStep
 from temporizador import temporizador as temp
 
 global tempo
@@ -24,6 +25,7 @@ def inicializar():
 
 def get_data(args):
     global exit, text_input, new_text
+
     while not exit:
         if not new_text:
             text_input = input("Enter the text: ")
@@ -36,54 +38,49 @@ def get_data(args):
 
 def rutina_principal(args):
     in_conversation = False
+    last_interaction = time.time()
     global exit, text_input, new_text
 
     while not exit:
+
         if new_text:
+            last_interaction = time.time()
             if not in_conversation and text_input != None :
                 if cs.NAME in text_input:
                     #Inicio conversacion.
                     in_conversation = True
 
             if in_conversation:
-                #Comprobar si es una orden especial
-                if 'apagate' in text_input:
+                categoria = FirstStep(text_input)
+
+                if categoria == cs.Categories.EXIT:
                     exit = True
                 
-                #Comprobar si me piden subir o bajar el volumen
-                if 'volumen' in text_input:
+                elif categoria == cs.Categories.AJUSTES:
                     ajustes.Volumen(text_input)
+                
+                elif categoria == cs.Categories.TEMPO :
+                    hp.Say(tempo.procesa(text_input))
 
-                #comprobar si hay alguna orden de temporizacion
-                for Temporizacion in cs.TEMP_CONSTANTS:
-                    found = False
-                    for item in Temporizacion:
-                        if item in text_input:
-                            hp.Say(tempo.procesa(item, text_input))
-                            found = True
-                            break
-                    if found:
-                        break
-                    
-                #Comprobar si nos están saludando
-                for Saludo in cs.SALUDOS:
-                    if Saludo in text_input:
-                        hp.Say("Buenos días!")
-                        break
+                elif categoria == cs.Categories.SALUDO:
+                    hp.Say("Buenos días!")
+                
+                elif categoria == cs.Categories.DESPEDIDA:
+                    hp.Say("Agur.")
+                    in_conversation = False
 
-                #Comprobar si se están despidiendo
-                for Despedida in cs.DESPEDIDAS:
-                    if Despedida in text_input:
-                        hp.Say("Agur.")
-                        in_conversation = False
-                    break
             new_text = False
-        else:
-            time.sleep(0.1)
+
+        #si pasan mas de 30 segundos sin interaccion, damos por terminada la conversacion
+        elif in_conversation:
+            if time.time() - last_interaction > 30:
+                hp.Say("Hasta luego!")
+                in_conversation = False
+        
+        time.sleep(0.1)
     return
 
 if __name__ == "__main__":
-    
     inicializar()
 
     #Arrancar las tareas

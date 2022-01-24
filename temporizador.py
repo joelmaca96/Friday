@@ -71,8 +71,6 @@ class temporizador():
                 return temp
         return None
 
-
-    
     def __get_actual_date(self):
         today = date.today()
         
@@ -103,8 +101,20 @@ class temporizador():
 
         return hora_str
 
-    def procesa(self, clave, frase):
+    def procesa(self,  frase):
         resultado = None
+        clave = None
+        for Temporizacion in cs.TEMP_QUESTIONS:
+            for item in Temporizacion:
+                if item in frase:
+                    clave = item
+                    break
+        
+        if clave == None:
+            for item in cs.TEMPORIZADOR:
+                if item in frase:
+                    clave = item
+                    break
         
         if 'hora' in clave:
             return self.__get_actual_time()

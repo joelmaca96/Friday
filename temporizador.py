@@ -69,6 +69,7 @@ class temporizador():
                     self.temporizando = False
 
                 return temp
+        return None
 
 
     
